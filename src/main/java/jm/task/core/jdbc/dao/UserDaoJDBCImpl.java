@@ -1,35 +1,49 @@
 package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
+import jm.task.core.jdbc.util.Util;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import static jm.task.core.jdbc.util.Util.getConnection;
+
 
 public class UserDaoJDBCImpl implements UserDao {
-
-    private final Connection connection = getConnection();
     public UserDaoJDBCImpl() {
     }
+
     public void createUsersTable() {
-        try (Statement st = connection.createStatement()) {
-            st.executeUpdate("CREATE TABLE IF NOT EXISTS users " +
-                    "(id int not null auto_increment, name VARCHAR(30), " +
-                    "lastname VARCHAR(30), age numeric, PRIMARY KEY (id))");
+        String sql = "CREATE TABLE IF NOT EXISTS User (" +
+                "id INT auto_increment, " +
+                "name VARCHAR(255), " +
+                "lastName VARCHAR(255), " +
+                "age INT, " +
+                "primary key (id))";
+        try (Connection connection = Util.getConnection();
+             Statement st = connection.createStatement()) {
+            st.executeUpdate(sql);
+            System.out.println("Таблица создана");
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
     public void dropUsersTable() {
-        try (Statement st = connection.createStatement()) {
-            st.executeUpdate("DROP TABLE IF EXISTS users");
+        String sql = "DROP TABLE IF EXISTS user";
+        try (Connection connection = Util.getConnection();
+             Statement st = connection.createStatement()) {
+            st.executeUpdate(sql);
+            System.out.println("Таблица полностью удалена");
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
     public void saveUser(String name, String lastName, byte age) {
-        try (PreparedStatement ps = connection
-                .prepareStatement("INSERT INTO users(name, lastname, age) VALUES(?, ?, ?)")) {
+        String sql = "INSERT INTO user (name, lastName, age) VALUES(?, ?, ?)";
+        try (Connection connection = Util.getConnection();
+             PreparedStatement ps = connection
+                     .prepareStatement(sql)) {
             ps.setString(1, name);
             ps.setString(2, lastName);
             ps.setByte(3, age);
@@ -39,19 +53,24 @@ public class UserDaoJDBCImpl implements UserDao {
             e.printStackTrace();
         }
     }
-
     public void removeUserById(long id) {
-        try (Statement st = connection.createStatement()) {
-            st.executeUpdate("DELETE FROM users WHERE id");
+        String sql = "DELETE FROM user WHERE id = ?";
+        try (Connection connection = Util.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setLong(1, id);
+            preparedStatement.executeUpdate();
+            System.out.println("User с id " + id + " удален.");
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
     public List<User> getAllUsers() {
         List<User> allUsers = new ArrayList<>();
+        String sql = "SELECT id, name, lastName, age FROM user";
 
-        try (Statement st = connection.createStatement()) {
-            ResultSet rs = st.executeQuery("SELECT id, name, lastName, age FROM users");
+        try (Connection connection = Util.getConnection();
+             Statement st = connection.createStatement()) {
+            ResultSet rs = st.executeQuery(sql);
 
             while (rs.next()) {
                 User user = new User();
@@ -69,8 +88,10 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void cleanUsersTable() {
-        try (Statement st = connection.createStatement()) {
-            st.executeUpdate("TRUNCATE users");
+        String sql = "TRUNCATE user";
+        try (Connection connection = Util.getConnection();
+             Statement st = connection.createStatement()) {
+            st.executeUpdate(sql);
         } catch (SQLException e) {
             e.printStackTrace();
         }
